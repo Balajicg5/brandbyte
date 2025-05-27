@@ -41,6 +41,20 @@ export interface Campaign {
     name: string;
     description: string;
     status: 'draft' | 'active' | 'paused' | 'completed';
+    // Product details
+    productName: string;
+    productDescription: string;
+    productPrice?: string;
+    productCategory: string;
+    // Campaign goals
+    campaignGoals: string[];
+    targetAudience: string;
+    callToAction: string;
+    // Target platforms
+    targetPlatforms: string[];
+    // Generated content
+    generatedPrompt?: string;
+    generatedImageUrl?: string;
     createdAt: string;
     updatedAt: string;
 }
