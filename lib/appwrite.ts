@@ -1,0 +1,285 @@
+import { Client, Account, ID, Databases, Storage, Query } from 'appwrite';
+
+const client = new Client();
+
+client
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || '')
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '');
+
+export const account = new Account(client);
+export const databases = new Databases(client);
+export const storage = new Storage(client);
+
+export { ID };
+
+// Database configuration
+export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'brandbyte-db';
+export const BRANDS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_BRANDS_COLLECTION_ID || 'brands';
+export const CAMPAIGNS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_CAMPAIGNS_COLLECTION_ID || 'campaigns';
+export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'brand-assets';
+
+// Brand interface
+export interface Brand {
+    $id?: string;
+    userId: string;
+    name: string;
+    description: string;
+    logo?: string;
+    logoUrl?: string;
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+// Campaign interface  
+export interface Campaign {
+    $id?: string;
+    userId: string;
+    brandId: string;
+    name: string;
+    description: string;
+    status: 'draft' | 'active' | 'paused' | 'completed';
+    createdAt: string;
+    updatedAt: string;
+}
+
+// Authentication functions
+export const authService = {
+    // Create Email OTP session
+    createEmailOTPSession: async (email: string) => {
+        try {
+            const session = await account.createEmailToken(ID.unique(), email);
+            return session;
+        } catch (error) {
+            console.error('Error creating email OTP session:', error);
+            throw error;
+        }
+    },
+
+    // Verify Email OTP
+    verifyEmailOTP: async (userId: string, secret: string) => {
+        try {
+            const session = await account.createSession(userId, secret);
+            return session;
+        } catch (error) {
+            console.error('Error verifying email OTP:', error);
+            throw error;
+        }
+    },
+
+    // Get current user
+    getCurrentUser: async () => {
+        try {
+            const user = await account.get();
+            return user;
+        } catch (error) {
+            console.error('Error getting current user:', error);
+            return null;
+        }
+    },
+
+    // Logout
+    logout: async () => {
+        try {
+            await account.deleteSession('current');
+        } catch (error) {
+            console.error('Error logging out:', error);
+            throw error;
+        }
+    },
+
+    // Check if user is authenticated
+    isAuthenticated: async () => {
+        try {
+            await account.get();
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+};
+
+// Brand management functions
+export const brandService = {
+    // Create a new brand
+    createBrand: async (brand: Omit<Brand, '$id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const now = new Date().toISOString();
+            const response = await databases.createDocument(
+                DATABASE_ID,
+                BRANDS_COLLECTION_ID,
+                ID.unique(),
+                {
+                    ...brand,
+                    createdAt: now,
+                    updatedAt: now
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error creating brand:', error);
+            throw error;
+        }
+    },
+
+    // Get user's brands
+    getUserBrands: async (userId: string) => {
+        try {
+            const response = await databases.listDocuments(
+                DATABASE_ID,
+                BRANDS_COLLECTION_ID,
+                [
+                    Query.equal('userId', userId)
+                ]
+            );
+            return response.documents as unknown as Brand[];
+        } catch (error) {
+            console.error('Error getting user brands:', error);
+            throw error;
+        }
+    },
+
+    // Update brand
+    updateBrand: async (brandId: string, updates: Partial<Brand>) => {
+        try {
+            const response = await databases.updateDocument(
+                DATABASE_ID,
+                BRANDS_COLLECTION_ID,
+                brandId,
+                {
+                    ...updates,
+                    updatedAt: new Date().toISOString()
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error updating brand:', error);
+            throw error;
+        }
+    },
+
+    // Delete brand
+    deleteBrand: async (brandId: string) => {
+        try {
+            await databases.deleteDocument(DATABASE_ID, BRANDS_COLLECTION_ID, brandId);
+        } catch (error) {
+            console.error('Error deleting brand:', error);
+            throw error;
+        }
+    },
+
+    // Upload brand logo
+    uploadLogo: async (file: File) => {
+        try {
+            const response = await storage.createFile(BUCKET_ID, ID.unique(), file);
+            return response;
+        } catch (error) {
+            console.error('Error uploading logo:', error);
+            throw error;
+        }
+    },
+
+    // Get logo URL
+    getLogoUrl: (fileId: string) => {
+        return storage.getFileView(BUCKET_ID, fileId);
+    },
+
+    // Delete logo
+    deleteLogo: async (fileId: string) => {
+        try {
+            await storage.deleteFile(BUCKET_ID, fileId);
+        } catch (error) {
+            console.error('Error deleting logo:', error);
+            throw error;
+        }
+    }
+};
+
+// Campaign management functions
+export const campaignService = {
+    // Create a new campaign
+    createCampaign: async (campaign: Omit<Campaign, '$id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            const now = new Date().toISOString();
+            const response = await databases.createDocument(
+                DATABASE_ID,
+                CAMPAIGNS_COLLECTION_ID,
+                ID.unique(),
+                {
+                    ...campaign,
+                    createdAt: now,
+                    updatedAt: now
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error creating campaign:', error);
+            throw error;
+        }
+    },
+
+    // Get user's campaigns
+    getUserCampaigns: async (userId: string) => {
+        try {
+            const response = await databases.listDocuments(
+                DATABASE_ID,
+                CAMPAIGNS_COLLECTION_ID,
+                [
+                    Query.equal('userId', userId)
+                ]
+            );
+            return response.documents as unknown as Campaign[];
+        } catch (error) {
+            console.error('Error getting user campaigns:', error);
+            throw error;
+        }
+    },
+
+    // Get brand campaigns
+    getBrandCampaigns: async (brandId: string) => {
+        try {
+            const response = await databases.listDocuments(
+                DATABASE_ID,
+                CAMPAIGNS_COLLECTION_ID,
+                [
+                    Query.equal('brandId', brandId)
+                ]
+            );
+            return response.documents as unknown as Campaign[];
+        } catch (error) {
+            console.error('Error getting brand campaigns:', error);
+            throw error;
+        }
+    },
+
+    // Update campaign
+    updateCampaign: async (campaignId: string, updates: Partial<Campaign>) => {
+        try {
+            const response = await databases.updateDocument(
+                DATABASE_ID,
+                CAMPAIGNS_COLLECTION_ID,
+                campaignId,
+                {
+                    ...updates,
+                    updatedAt: new Date().toISOString()
+                }
+            );
+            return response;
+        } catch (error) {
+            console.error('Error updating campaign:', error);
+            throw error;
+        }
+    },
+
+    // Delete campaign
+    deleteCampaign: async (campaignId: string) => {
+        try {
+            await databases.deleteDocument(DATABASE_ID, CAMPAIGNS_COLLECTION_ID, campaignId);
+        } catch (error) {
+            console.error('Error deleting campaign:', error);
+            throw error;
+        }
+    }
+}; 
