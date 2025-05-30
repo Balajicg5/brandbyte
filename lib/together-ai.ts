@@ -10,10 +10,14 @@ interface GeneratePromptRequest {
     callToAction: string;
     primaryColor: string;
     secondaryColor: string;
+    userId: string;
+    brandId: string;
+    campaignId?: string;
+    customPrompt?: string;
 }
 
 class TogetherAIService {
-    async generateAdCreative(request: GeneratePromptRequest): Promise<{ prompt: string; imageUrl: string }> {
+    async generateAdCreative(request: GeneratePromptRequest): Promise<{ prompt: string; imageUrl: string; appwriteFileId?: string }> {
         try {
             const response = await fetch('/api/generate-ad', {
                 method: 'POST',
@@ -32,7 +36,8 @@ class TogetherAIService {
             const data = await response.json();
             return {
                 prompt: data.prompt,
-                imageUrl: data.imageUrl
+                imageUrl: data.imageUrl,
+                appwriteFileId: data.appwriteFileId
             };
         } catch (error: any) {
             console.error('Error calling generate-ad API:', error);

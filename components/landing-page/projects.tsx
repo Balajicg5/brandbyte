@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowUpRight } from "lucide-react"
-import ProjectPopup from "../portfolio/project-popup"
 import { fetchPortfolioData } from "@/utils/csv-parser"
 import type { PortfolioItem } from "@/utils/csv-parser"
 
 export default function Projects() {
-  const [selectedProject, setSelectedProject] = useState<PortfolioItem | null>(null)
   const [projects, setProjects] = useState<PortfolioItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -29,14 +27,6 @@ export default function Projects() {
 
     loadProjects()
   }, [])
-
-  const openProjectPopup = (project: PortfolioItem) => {
-    setSelectedProject(project)
-  }
-
-  const closeProjectPopup = () => {
-    setSelectedProject(null)
-  }
 
   return (
     <section id="projects" className="my-20">
@@ -64,8 +54,7 @@ export default function Projects() {
           : projects.map((project) => (
               <div
                 key={project.slug}
-                className="card overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.02] cursor-pointer"
-                onClick={() => openProjectPopup(project)}
+                className="card overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.02]"
               >
                 <div className="flex items-center justify-center p-4 pt-6 bg-gray-100 dark:bg-gray-800 relative">
                   <Image
@@ -87,14 +76,6 @@ export default function Projects() {
               </div>
             ))}
       </div>
-
-      <div className="flex justify-center mt-8">
-        <Link href="/ad-gallery" className="btn-primary">
-          Explore More Examples
-        </Link>
-      </div>
-
-      <ProjectPopup project={selectedProject} onClose={closeProjectPopup} />
     </section>
   )
 }

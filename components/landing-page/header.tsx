@@ -9,16 +9,16 @@ import { usePathname, useRouter } from "next/navigation"
 import { Menu } from "lucide-react"
 import ThemeToggle from "./theme-toggle"
 import { useTheme } from "next-themes"
-import NavDropdown from "./nav-dropdown"
 import MobileMenu from "./mobile-menu"
-import { resourcesDropdownData } from "./nav-data"
 import SignInButton from "@/components/auth/sign-in-button"
+import { useAuth } from "@/lib/auth-context"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { resolvedTheme } = useTheme()
+  const { isAuthenticated } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
 
@@ -87,34 +87,16 @@ export default function Header() {
               {/* Desktop Navigation */}
               <nav className="hidden md:block">
                 <ul className="flex space-x-6">
-                  <li className="hidden md:block">
-                    <NavDropdown
-                      trigger="Resources"
-                      items={resourcesDropdownData}
-                      columns={2}
-                      className={pathname.startsWith("/resources") ? "text-[#7A7FEE] dark:text-[#7A7FEE]" : ""}
-                    />
-                  </li>
-                  <li>
-                    <Link
-                      href="/ad-gallery"
-                      className={`transition-colors ${
-                        pathname === "/ad-gallery" || pathname === "/portfolio"
-                          ? "text-[#7A7FEE] dark:text-[#7A7FEE]"
-                          : "text-black dark:text-white hover:text-[#7A7FEE] dark:hover:text-[#7A7FEE]"
-                      }`}
-                    >
-                      Examples
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/auth/signin"
-                      className={`btn-primary-outline transition-colors`}
-                    >
-                      Get Started
-                    </Link>
-                  </li>
+                  {!isAuthenticated && (
+                    <li>
+                      <Link
+                        href="/auth/signin"
+                        className="btn-primary-outline transition-colors"
+                      >
+                        Get Started
+                      </Link>
+                    </li>
+                  )}
                 </ul>
               </nav>
 

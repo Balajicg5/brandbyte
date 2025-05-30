@@ -186,24 +186,6 @@
     background-color: transparent;
   }
 
-  /* Dropdown menu styles */
-  .nav-dropdown {
-    @apply relative;
-  }
-
-  .nav-dropdown-content {
-    @apply absolute z-50 mt-2 p-4 rounded-xl shadow-lg;
-    min-width: 220px;
-  }
-
-  .dark .nav-dropdown-content {
-    @apply bg-gray-800 border border-gray-700;
-  }
-
-  .light .nav-dropdown-content {
-    @apply bg-white border border-gray-100;
-  }
-
   /* Prose styles for portfolio content */
   .prose h3 {
     @apply text-xl font-semibold mt-8 mb-4 text-gray-900 dark:text-white;

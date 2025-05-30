@@ -17,10 +17,16 @@ import {
     Download,
     Play,
     Pause,
-    Square
+    Square,
+    Wand2,
+    ChevronRight,
+    Target,
+    Palette,
+    Images
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import AdGallery from "@/components/dashboard/ad-gallery";
 
 export default function CampaignsPage() {
     const { user } = useAuth();
@@ -33,6 +39,7 @@ export default function CampaignsPage() {
     const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
+    const [showGallery, setShowGallery] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -60,6 +67,14 @@ export default function CampaignsPage() {
     const handleCreateSuccess = (newCampaign: Campaign) => {
         setCampaigns(prev => [newCampaign, ...prev]);
         setShowCreateForm(false);
+        
+        // If the campaign has a generated image, optionally show gallery
+        if (newCampaign.generatedImageUrl) {
+            // Show success message and option to view gallery
+            setTimeout(() => {
+                setShowGallery(true);
+            }, 500);
+        }
     };
 
     const handleEditSuccess = (updatedCampaign: Campaign) => {
@@ -127,6 +142,9 @@ export default function CampaignsPage() {
         }
     };
 
+    // Check if user needs to create brands first
+    const userHasNoBrands = brands.length === 0 && !isLoading;
+
     if (showCreateForm) {
         return (
             <ProtectedRoute>
@@ -165,9 +183,18 @@ export default function CampaignsPage() {
                                 Campaigns
                             </h1>
                             <p className="text-gray-600 dark:text-gray-400">
-                                Manage your ad campaigns and generate AI-powered creatives
+                                Create campaigns and generate AI-powered ad creatives
                             </p>
                         </div>
+                        {!userHasNoBrands && (
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={() => setShowGallery(true)}
+                                    className="btn-secondary flex items-center"
+                                >
+                                    <Images className="w-4 h-4 mr-2" />
+                                    View Gallery
+                                </button>
                         <button
                             onClick={() => setShowCreateForm(true)}
                             className="btn-primary flex items-center"
@@ -176,8 +203,110 @@ export default function CampaignsPage() {
                             New Campaign
                         </button>
                     </div>
+                        )}
+                    </div>
 
-                    {/* Search and Filters */}
+                    {/* No brands message */}
+                    {userHasNoBrands && (
+                        <div className="bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+                            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-[#7A7FEE]/10 rounded-full">
+                                <Palette className="w-8 h-8 text-[#7A7FEE]" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                Create Your First Brand
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                                Before creating campaigns, you need to set up at least one brand. 
+                                Your brand defines the visual identity and messaging for your ad campaigns.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                <Link
+                                    href="/dashboard/brands/new"
+                                    className="btn-primary inline-flex items-center justify-center"
+                                >
+                                    <Palette className="w-4 h-4 mr-2" />
+                                    Create Your First Brand
+                                </Link>
+                                <Link
+                                    href="/dashboard/brands"
+                                    className="btn-secondary inline-flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-[#7A7FEE] dark:hover:text-[#7A7FEE]"
+                                >
+                                    View All Brands
+                                    <ChevronRight className="w-4 h-4 ml-1" />
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Campaign creation guidance */}
+                    {!userHasNoBrands && campaigns.length === 0 && !isLoading && (
+                        <div className="bg-gradient-to-r from-[#7A7FEE]/5 to-blue-500/5 rounded-lg border border-[#7A7FEE]/20 p-8">
+                            <div className="flex items-start space-x-4">
+                                <div className="flex-shrink-0 w-12 h-12 bg-[#7A7FEE]/10 rounded-lg flex items-center justify-center">
+                                    <Target className="w-6 h-6 text-[#7A7FEE]" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                        Ready to Create Your First Campaign?
+                                    </h3>
+                                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                        Follow our intuitive 3-step process to create high-converting ad campaigns:
+                                    </p>
+                                    <div className="grid md:grid-cols-3 gap-4 mb-6">
+                                        <div className="flex items-center space-x-3 p-3 bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div className="w-8 h-8 bg-[#7A7FEE] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                                1
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+                                                    Campaign Details
+                                                </h4>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    Name, goals & audience
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3 p-3 bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div className="w-8 h-8 bg-[#7A7FEE] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                                2
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+                                                    Product Info
+                                                </h4>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    Description & positioning
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3 p-3 bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div className="w-8 h-8 bg-[#7A7FEE] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                                3
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+                                                    Generate Ads
+                                                </h4>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                    AI-powered creatives
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreateForm(true)}
+                                        className="btn-primary inline-flex items-center"
+                                    >
+                                        <Wand2 className="w-4 h-4 mr-2" />
+                                        Create Your First Campaign
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Search and Filters - only show if user has campaigns */}
+                    {campaigns.length > 0 && (
                     <div className="flex items-center space-x-4">
                         <div className="relative flex-1 max-w-md">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -202,6 +331,7 @@ export default function CampaignsPage() {
                             <option value="completed">Completed</option>
                         </select>
                     </div>
+                    )}
 
                     {/* Campaigns List */}
                     {isLoading ? (
@@ -218,29 +348,17 @@ export default function CampaignsPage() {
                                 </div>
                             ))}
                         </div>
-                    ) : filteredCampaigns.length === 0 ? (
+                    ) : filteredCampaigns.length === 0 && campaigns.length > 0 ? (
                         <div className="bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
                             <Megaphone className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                {searchTerm || statusFilter !== "all" ? "No campaigns found" : "No campaigns yet"}
+                                No campaigns found
                             </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                {searchTerm || statusFilter !== "all"
-                                    ? "Try adjusting your search or filters"
-                                    : "Create your first campaign to start generating AI-powered ad creatives"
-                                }
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Try adjusting your search or filters
                             </p>
-                            {!searchTerm && statusFilter === "all" && (
-                                <button
-                                    onClick={() => setShowCreateForm(true)}
-                                    className="btn-primary inline-flex items-center"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Your First Campaign
-                                </button>
-                            )}
                         </div>
-                    ) : (
+                    ) : campaigns.length > 0 ? (
                         <div className="space-y-4">
                             {filteredCampaigns.map((campaign) => (
                                 <div
@@ -390,7 +508,7 @@ export default function CampaignsPage() {
                                 </div>
                             ))}
                         </div>
-                    )}
+                    ) : null}
 
                     {/* Delete Confirmation Modal */}
                     {deleteConfirm && (
@@ -436,6 +554,12 @@ export default function CampaignsPage() {
                     )}
                 </div>
             </DashboardLayout>
+            
+            {/* Ad Gallery Modal */}
+            <AdGallery 
+                isOpen={showGallery} 
+                onClose={() => setShowGallery(false)} 
+            />
         </ProtectedRoute>
     );
 } 

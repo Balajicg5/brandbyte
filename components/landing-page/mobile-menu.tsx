@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { ChevronDown, ExternalLink, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useTheme } from "next-themes"
-import { resourcesDropdownData } from "./nav-data"
 import SignInButton from "@/components/auth/sign-in-button"
+import { useAuth } from "@/lib/auth-context"
 
 interface MobileMenuProps {
   isOpen: boolean
@@ -15,11 +15,11 @@ interface MobileMenuProps {
 }
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-  const [expandedDropdown, setExpandedDropdown] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const { resolvedTheme } = useTheme()
+  const { isAuthenticated } = useAuth()
 
   // Ensure component is mounted before rendering theme-dependent elements
   useEffect(() => {
@@ -56,10 +56,6 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [isOpen, onClose])
-
-  const toggleDropdown = (dropdown: string) => {
-    setExpandedDropdown(expandedDropdown === dropdown ? null : dropdown)
-  }
 
   if (!isOpen) return null
 
@@ -111,129 +107,21 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </Link>
             </li>
 
-            {/* Resources Dropdown */}
-            <li className="border-b border-gray-200 dark:border-gray-800 pb-1">
-              <button
-                onClick={() => toggleDropdown("resources")}
-                className={`flex items-center justify-between w-full py-3 px-4 rounded-lg text-base ${
-                  pathname.startsWith("/resources")
-                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                    : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-              >
-                <span>Resources</span>
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform ${expandedDropdown === "resources" ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {expandedDropdown === "resources" && (
-                <div className="pt-2 pb-3 px-4">
-                  {resourcesDropdownData.map((column, colIndex) => (
-                    <div key={colIndex} className="mb-4">
-                      {column.map((item, itemIndex) =>
-                        item.external ? (
-                          <a
-                            key={`${colIndex}-${itemIndex}`}
-                            href={item.href}
-                            className="flex items-center gap-3 py-3 group"
-                            onClick={onClose}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <div
-                              className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center ${
-                                item.color || "bg-gray-100 dark:bg-gray-800"
-                              }`}
-                            >
-                              {typeof item.icon === "string" ? (
-                                <Image
-                                  src={item.icon || "/placeholder.svg"}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  className="w-6 h-6 object-contain"
-                                />
-                              ) : item.icon ? (
-                                <item.icon className="w-5 h-5 text-white" />
-                              ) : null}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</h3>
-                                <ExternalLink className="w-3.5 h-3.5 ml-1.5 text-gray-400" />
-                              </div>
-                              {item.description && (
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                              )}
-                            </div>
-                          </a>
-                        ) : (
-                          <Link
-                            key={`${colIndex}-${itemIndex}`}
-                            href={item.href}
-                            className="flex items-center gap-3 py-3 group"
-                            onClick={onClose}
-                          >
-                            <div
-                              className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center ${
-                                item.color || "bg-gray-100 dark:bg-gray-800"
-                              }`}
-                            >
-                              {typeof item.icon === "string" ? (
-                                <Image
-                                  src={item.icon || "/placeholder.svg"}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  className="w-6 h-6 object-contain"
-                                />
-                              ) : item.icon ? (
-                                <item.icon className="w-5 h-5 text-white" />
-                              ) : null}
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</h3>
-                              {item.description && (
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.description}</p>
-                              )}
-                            </div>
-                          </Link>
-                        ),
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </li>
-
-            <li>
-              <Link
-                href="/ad-gallery"
-                className={`flex items-center py-3 px-4 rounded-lg text-base ${
-                  pathname === "/ad-gallery" || pathname === "/portfolio"
-                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                    : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-                onClick={onClose}
-              >
-                Examples
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/auth/signin"
-                className={`flex items-center py-3 px-4 rounded-lg text-base ${
-                  pathname === "/auth/signin" || pathname === "/signup" || pathname === "/start"
-                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                    : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-                onClick={onClose}
-              >
-                Get Started
-              </Link>
-            </li>
+            {!isAuthenticated && (
+              <li>
+                <Link
+                  href="/auth/signin"
+                  className={`flex items-center py-3 px-4 rounded-lg text-base ${
+                    pathname === "/auth/signin" || pathname === "/signup" || pathname === "/start"
+                      ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                  onClick={onClose}
+                >
+                  Get Started
+                </Link>
+              </li>
+            )}
 
             {/* Sign In Button for Mobile */}
             <li className="pt-2">

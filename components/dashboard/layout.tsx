@@ -12,7 +12,8 @@ import {
     Menu, 
     X, 
     LogOut,
-    User
+    User,
+    Images
 } from "lucide-react";
 import { brandColors } from "@/components/landing-page/color-utils";
 
@@ -24,6 +25,7 @@ const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Brands", href: "/dashboard/brands", icon: Palette },
     { name: "Campaigns", href: "/dashboard/campaigns", icon: Megaphone },
+    { name: "Gallery", href: "/dashboard/gallery", icon: Images },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
