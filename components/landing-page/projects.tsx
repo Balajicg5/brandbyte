@@ -1,33 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { ArrowUpRight } from "lucide-react"
-import { fetchPortfolioData } from "@/utils/csv-parser"
-import type { PortfolioItem } from "@/utils/csv-parser"
+
+// Static ad creative data
+const adCreatives = [
+  {
+    id: 1,
+    image: "/ad1.jpg",
+    title: "Foot Wear Campaign",
+    description: "High-converting social media ad for foot retail"
+  },
+  {
+    id: 2,
+    image: "/ad2.jpg",
+    title: "T-Shirt Campaign",
+    description: "Eye-catching product showcase for t-shirt retail"
+  },
+  {
+    id: 3,
+    image: "/ad3.jpg",
+    title: "Cake Shop Campaign",
+    description: "Appetizing food photography for cake shop"
+  },
+  {
+    id: 4,
+    image: "/ad4.jpg",
+    title: "Summer Sale Campaign",
+    description: "special offer children"
+  }
+]
 
 export default function Projects() {
-  const [projects, setProjects] = useState<PortfolioItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Fetch portfolio data on component mount
-  useEffect(() => {
-    async function loadProjects() {
-      try {
-        const data = await fetchPortfolioData()
-        // Get the first 3 examples for the landing page
-        setProjects(data.slice(0, 3))
-      } catch (error) {
-        console.error("Error loading ad examples:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadProjects()
-  }, [])
-
   return (
     <section id="projects" className="my-20">
       <h2 className="text-black dark:text-white mb-6">
@@ -39,42 +43,27 @@ export default function Projects() {
         boost engagement and conversions with stunning, data-driven designs.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {isLoading
-          ? // Loading skeleton
-            Array.from({ length: 3 }).map((_, index) => (
-              <div key={`skeleton-${index}`} className="card overflow-hidden shadow-lg animate-pulse">
-                <div className="h-48 bg-gray-200 dark:bg-gray-700"></div>
-                <div className="p-4">
-                  <div className="h-6 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-              </div>
-            ))
-          : projects.map((project) => (
-              <div
-                key={project.slug}
-                className="card overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.02]"
-              >
-                <div className="flex items-center justify-center p-4 pt-6 bg-gray-100 dark:bg-gray-800 relative">
-                  <Image
-                    src={project.mainImage || "/placeholder-ad-creative-example.png"}
-                    alt={project.title}
-                    width={600}
-                    height={400}
-                    className="w-full h-auto object-contain max-h-[220px]"
-                  />
-                </div>
-                <div className="p-4 md:p-6">
-                  <h3 className="text-xl font-semibold text-black dark:text-white">{project.title}</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm mt-1 mb-4">{project.shortDescription}</p>
-                  <div className="inline-flex items-center text-[#7A7FEE] text-sm font-medium group">
-                    View Details{" "}
-                    <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
-                </div>
-              </div>
-            ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {adCreatives.map((creative) => (
+          <div
+            key={creative.id}
+            className="card overflow-hidden shadow-lg transform transition-transform duration-300 hover:scale-[1.02]"
+          >
+            <div className="flex items-center justify-center p-4 pt-6 bg-gray-100 dark:bg-gray-800 relative">
+              <Image
+                src={creative.image}
+                alt={creative.title}
+                width={600}
+                height={400}
+                className="w-full h-auto object-contain max-h-[220px]"
+              />
+            </div>
+            <div className="p-4 md:p-6">
+              <h3 className="text-xl font-semibold text-black dark:text-white">{creative.title}</h3>
+              <p className="text-gray-700 dark:text-gray-300 text-sm mt-1 mb-4">{creative.description}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   )
