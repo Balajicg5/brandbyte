@@ -4,8 +4,6 @@
 
 BrandByte is a modern web application that leverages cutting-edge AI technology to generate professional advertising creatives. Built with Next.js 15, it combines the power of LangChain for intelligent prompt generation and FLUX.1 for high-quality image generation, creating stunning ad creatives tailored to your brand and campaign goals.
 
-![BrandByte Banner](https://via.placeholder.com/1200x400/7A7FEE/FFFFFF?text=BrandByte+-+AI+Ad+Creative+Generation)
-
 ## ✨ Features
 
 ### 🎯 **Core Features**
@@ -276,12 +274,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **[Radix UI](https://www.radix-ui.com/)** for accessible component primitives
 - **[Tailwind CSS](https://tailwindcss.com/)** for the utility-first CSS framework
 
-## 📞 **Support**
-
-- 📧 Email: support@brandbyte.com
-- 💬 Discord: [Join our community](https://discord.gg/brandbyte)
-- 📖 Documentation: [docs.brandbyte.com](https://docs.brandbyte.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/brandbyte/issues)
 
 ---
 
