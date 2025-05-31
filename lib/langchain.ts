@@ -80,38 +80,56 @@ class LangChainService {
             }
             console.log('✅ Step 2: API key found');
 
-            // Much shorter, focused system prompt
-            const systemPrompt = `You are an ad creative expert. Create a detailed visual prompt for AI image generation.
+            // Enhanced system prompt for ad creative generation with text overlay areas
+            const systemPrompt = `You are an expert advertising creative director specializing in AI image generation for commercial advertisements.
 
-Focus on:
-- Brand colors and style
-- Product showcase
-- Professional composition
-- Clear visual hierarchy
+Create visual prompts for advertising posters that:
+- Generate professional advertising layouts with clear text overlay areas
+- Include designated spaces for brand name placement (top or prominent position)
+- Include designated areas for call-to-action buttons or text
+- Focus on lifestyle integration and emotional appeal
+- Use dynamic compositions that guide the eye to text areas
+- Create premium, commercial-grade aesthetics
+- NEVER generate any text, words, letters, or typography in the image
+- Design for text overlay compatibility with clean, uncluttered areas
 
-Keep it under 100 words and be specific about visual elements.`;
+The image should look like a professional ad template ready for brand name and CTA overlay.
+Keep prompts focused on layout, mood, and visual hierarchy. Maximum 3 sentences.
+CRITICAL: The image must contain NO TEXT, NO WORDS, NO LETTERS, NO TYPOGRAPHY whatsoever.`;
 
-            // Simplified user prompt template
+            // Enhanced user prompt template focused on ad layout and text placement areas
             const promptTemplate = PromptTemplate.fromTemplate(`
-Create a visual prompt for an ad image:
+Create an advertising image prompt for a professional ad creative:
 
-Brand: {brandName} ({brandDescription})
-Product: {productName} - {productDescription}
-Colors: {primaryColor}, {secondaryColor}
-Audience: {targetAudience}
-Platforms: {targetPlatforms}
+PRODUCT: {productName} - {productDescription}
+BRAND: {brandName} 
+AUDIENCE: {targetAudience}
+CAMPAIGN GOAL: {campaignGoals}
+BRAND COLORS: {primaryColor} and {secondaryColor}
+PLATFORMS: {targetPlatforms}
 
-Generate a concise visual prompt focusing on composition, lighting, and brand aesthetic.`);
+Generate a {productCategory} advertisement layout that:
+1. Has a clear focal area at the top for brand name overlay
+2. Includes a prominent call-to-action placement area (bottom or side)
+3. Appeals to {targetAudience} through lifestyle and emotion
+4. Uses {primaryColor} and {secondaryColor} as the primary color scheme
+5. Creates visual hierarchy for text overlay
+6. Looks like a professional advertising template
+
+Focus on composition, lighting, and space for text overlays. No text should be generated in the image itself.
+Make it poster-worthy and commercial-grade for {targetPlatforms} platforms.
+IMPORTANT: Generate absolutely NO TEXT, NO WORDS, NO LETTERS in the image - only visual elements and layout.`);
 
             console.log('🚀 Step 3: Formatting prompt template...');
             const userPrompt = await promptTemplate.format({
                 brandName: request.brandName,
-                brandDescription: request.brandDescription,
                 primaryColor: request.primaryColor,
                 secondaryColor: request.secondaryColor,
                 productName: request.productName,
                 productDescription: request.productDescription,
+                productCategory: request.productCategory,
                 targetAudience: request.targetAudience,
+                campaignGoals: request.campaignGoals.join(', '),
                 targetPlatforms: request.targetPlatforms.join(', ')
             });
 
@@ -130,7 +148,7 @@ Generate a concise visual prompt focusing on composition, lighting, and brand ae
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: userPrompt }
                     ],
-                    max_tokens: 200, // Reduced from 800
+                    max_tokens: 400, // Increased for more detailed layout descriptions
                     temperature: 0.7,
                 }),
             });
@@ -147,19 +165,149 @@ Generate a concise visual prompt focusing on composition, lighting, and brand ae
             const data = await response.json();
             console.log('📄 Step 8: Response data structure:', Object.keys(data));
             
-            const generatedPrompt = data.choices[0]?.message?.content;
+            let generatedPrompt = data.choices[0]?.message?.content;
             
             if (!generatedPrompt) {
                 console.error('❌ Step 8 FAILED: No prompt in response:', data);
                 throw new Error('No prompt generated from Together AI');
             }
 
-            console.log('✅ Step 9: Prompt generated successfully:', generatedPrompt.substring(0, 100) + '...');
-            return generatedPrompt.trim();
+            // Enhanced post-processing for ad creative layout
+            generatedPrompt = this.enhancePromptForAdCreativeLayout(generatedPrompt.trim(), request);
+
+            console.log('✅ Step 9: Enhanced ad creative prompt generated successfully:', generatedPrompt.substring(0, 100) + '...');
+            return generatedPrompt;
         } catch (error: any) {
             console.error('❌ ERROR in generateImagePrompt:', error);
             throw error;
         }
+    }
+
+    private enhancePromptForAdCreativeLayout(basePrompt: string, request: GenerateAdRequest): string {
+        // Get simple color descriptors
+        const colorDescriptors = this.getColorDescriptors(request.primaryColor, request.secondaryColor);
+        
+        // Enhanced ad creative specifications
+        const adCreativeEnhancements = [
+            "professional advertising layout",
+            "clear text overlay areas",
+            "brand name placement space at top",
+            "call-to-action button area",
+            `${colorDescriptors.primary} and ${colorDescriptors.secondary} brand color scheme`,
+            "commercial photography style",
+            "premium advertising aesthetic",
+            "text-ready composition",
+            "marketing campaign visual",
+            "no text or typography in image",
+            "clean overlay-friendly design"
+        ];
+
+        // Platform-specific enhancements
+        const platformEnhancements = this.getPlatformSpecificEnhancements(request.targetPlatforms);
+
+        // Clean the prompt and remove any hex colors
+        let cleanedPrompt = basePrompt.replace(/#[0-9A-Fa-f]{6}/g, (match) => {
+            if (match.toLowerCase() === request.primaryColor.toLowerCase()) {
+                return colorDescriptors.primary;
+            } else if (match.toLowerCase() === request.secondaryColor.toLowerCase()) {
+                return colorDescriptors.secondary;
+            }
+            return 'brand color';
+        });
+
+        // Remove any potential text generation instructions
+        cleanedPrompt = cleanedPrompt.replace(/\b(text|words|letters|typography|font|headline|title|writing|script|caption|label|sign|banner|message|slogan|tagline)\b/gi, 'visual element');
+
+        // Create final comprehensive ad creative prompt
+        const finalPrompt = `${cleanedPrompt}, ${adCreativeEnhancements.join(', ')}, ${platformEnhancements.join(', ')}, high quality, 4k, professional advertising photography, absolutely no text or words in image, text-free design, clean visual layout`;
+        
+        return finalPrompt;
+    }
+
+    private getPlatformSpecificEnhancements(platforms: string[]): string[] {
+        const enhancements: string[] = [];
+        
+        if (platforms.includes('Instagram') || platforms.includes('Social Media')) {
+            enhancements.push('Instagram-style composition', 'social media optimized layout');
+        }
+        
+        if (platforms.includes('Facebook')) {
+            enhancements.push('Facebook ad format', 'social engagement focused');
+        }
+        
+        if (platforms.includes('Google Ads') || platforms.includes('Search')) {
+            enhancements.push('search ad visual', 'conversion-focused layout');
+        }
+        
+        if (platforms.includes('LinkedIn')) {
+            enhancements.push('professional business aesthetic', 'B2B advertising style');
+        }
+        
+        if (platforms.includes('YouTube')) {
+            enhancements.push('video thumbnail style', 'attention-grabbing composition');
+        }
+        
+        if (platforms.includes('Print') || platforms.includes('Outdoor')) {
+            enhancements.push('print advertising layout', 'billboard-ready design');
+        }
+        
+        // Default enhancement if no specific platform matches
+        if (enhancements.length === 0) {
+            enhancements.push('multi-platform advertising design', 'versatile ad layout');
+        }
+        
+        return enhancements;
+    }
+
+    private getColorDescriptors(primaryColor: string, secondaryColor: string): { primary: string; secondary: string } {
+        const colorMap: { [key: string]: string } = {
+            '#FF0000': 'red',
+            '#00FF00': 'green', 
+            '#0000FF': 'blue',
+            '#FFFF00': 'yellow',
+            '#FF00FF': 'magenta',
+            '#00FFFF': 'cyan',
+            '#FFA500': 'orange',
+            '#800080': 'purple',
+            '#FFC0CB': 'pink',
+            '#A52A2A': 'brown',
+            '#808080': 'gray',
+            '#000000': 'black',
+            '#FFFFFF': 'white',
+            '#3B82F6': 'blue',
+            '#EF4444': 'red',
+            '#10B981': 'green',
+            '#F59E0B': 'yellow',
+            '#8B5CF6': 'purple',
+            '#EC4899': 'pink'
+        };
+
+        const getColorDescriptor = (color: string): string => {
+            const upperColor = color.toUpperCase();
+            if (colorMap[upperColor]) {
+                return colorMap[upperColor];
+            }
+            
+            // Simple color analysis
+            if (color.startsWith('#') && color.length === 7) {
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+                
+                if (r > g && r > b) return 'red';
+                if (g > r && g > b) return 'green';
+                if (b > r && b > g) return 'blue';
+                if (r > 200 && g > 200 && b > 200) return 'light';
+                if (r < 100 && g < 100 && b < 100) return 'dark';
+            }
+            
+            return 'colorful';
+        };
+
+        return {
+            primary: getColorDescriptor(primaryColor),
+            secondary: getColorDescriptor(secondaryColor)
+        };
     }
 
     private async generateImage(prompt: string): Promise<{ imageUrl: string; imageData?: ArrayBuffer }> {
@@ -309,4 +457,4 @@ Ad Copy:`);
 }
 
 // Export singleton instance
-export const langchainService = new LangChainService(); 
+export const langchainService = new LangChainService();

@@ -20,7 +20,7 @@ export { ID, Query };
 // Database configuration
 export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'brandbyte-db';
 export const AD_CREATIVES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_AD_CREATIVES_COLLECTION_ID || 'ad-creatives';
-export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'brand-assets';
+export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'default-bucket';
 
 // AdCreative interface for server operations
 export interface AdCreative {
@@ -81,6 +81,55 @@ export const serverAdCreativeService = {
             };
         } catch (error) {
             console.error('❌ Server: Error uploading to storage:', error);
+            throw error;
+        }
+    }
+};
+
+// Storage Service
+export const storageService = {
+    // Upload file to storage bucket
+    uploadFile: async (file: File, bucketId: string = BUCKET_ID) => {
+        try {
+            const result = await serverStorage.createFile(
+                bucketId,
+                ID.unique(),
+                file
+            );
+            return result;
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            throw error;
+        }
+    },
+
+    // Get file URL
+    getFileUrl: (fileId: string, bucketId: string = BUCKET_ID) => {
+        // Use our custom image serving route to avoid CORS issues
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+        
+        // Fallback for development environment
+        if (!baseUrl) {
+            if (typeof window !== 'undefined') {
+                // Client-side
+                baseUrl = window.location.origin;
+            } else {
+                // Server-side
+                baseUrl = process.env.NODE_ENV === 'development' 
+                    ? 'http://localhost:3000' 
+                    : 'https://your-domain.com'; // Replace with your actual domain
+            }
+        }
+        
+        return `${baseUrl}/api/serve-image?fileId=${fileId}&bucketId=${bucketId}`;
+    },
+
+    // Delete file
+    deleteFile: async (fileId: string, bucketId: string = BUCKET_ID) => {
+        try {
+            await serverStorage.deleteFile(bucketId, fileId);
+        } catch (error) {
+            console.error('Error deleting file:', error);
             throw error;
         }
     }

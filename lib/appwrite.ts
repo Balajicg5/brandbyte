@@ -17,7 +17,7 @@ export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'bran
 export const BRANDS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_BRANDS_COLLECTION_ID || 'brands';
 export const CAMPAIGNS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_CAMPAIGNS_COLLECTION_ID || 'campaigns';
 export const AD_CREATIVES_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_AD_CREATIVES_COLLECTION_ID || 'ad-creatives';
-export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'brand-assets';
+export const BUCKET_ID = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || 'default-bucket';
 
 // Brand interface
 export interface Brand {
@@ -42,22 +42,30 @@ export interface Campaign {
     name: string;
     description: string;
     status: 'draft' | 'active' | 'paused' | 'completed';
+    
     // Product details
     productName: string;
     productDescription: string;
     productPrice?: string;
-    productCategory: string;
-    // Campaign goals - stored as JSON string in Appwrite
+    productCategory?: string;
+    
+    // Campaign goals and targeting
     campaignGoals: string[];
     targetAudience: string;
     callToAction: string;
-    // Target platforms - stored as JSON string in Appwrite
     targetPlatforms: string[];
+    
     // Generated content
     generatedPrompt?: string;
     generatedImageUrl?: string;
-    createdAt: string;
-    updatedAt: string;
+    finalPosterUrl?: string;
+    
+    // Brand colors (from associated brand)
+    primaryColor?: string;
+    secondaryColor?: string;
+    
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // AdCreative interface for storing generated ad creatives
@@ -371,6 +379,44 @@ export const campaignService = {
             await databases.deleteDocument(DATABASE_ID, CAMPAIGNS_COLLECTION_ID, campaignId);
         } catch (error) {
             console.error('Error deleting campaign:', error);
+            throw error;
+        }
+    },
+
+    // Get campaign
+    getCampaign: async (campaignId: string): Promise<Campaign> => {
+        try {
+            const result = await databases.getDocument(
+                DATABASE_ID,
+                CAMPAIGNS_COLLECTION_ID,
+                campaignId
+            );
+
+            return {
+                $id: result.$id,
+                userId: result.userId,
+                brandId: result.brandId,
+                name: result.name,
+                description: result.description,
+                status: result.status,
+                productName: result.productName,
+                productDescription: result.productDescription,
+                productPrice: result.productPrice,
+                productCategory: result.productCategory,
+                targetAudience: result.targetAudience,
+                callToAction: result.callToAction,
+                generatedPrompt: result.generatedPrompt,
+                generatedImageUrl: result.generatedImageUrl,
+                finalPosterUrl: result.finalPosterUrl,
+                primaryColor: result.primaryColor,
+                secondaryColor: result.secondaryColor,
+                createdAt: result.createdAt,
+                updatedAt: result.updatedAt,
+                campaignGoals: JSON.parse(result.campaignGoals || '[]'),
+                targetPlatforms: JSON.parse(result.targetPlatforms || '[]'),
+            } as Campaign;
+        } catch (error) {
+            console.error('Error getting campaign:', error);
             throw error;
         }
     }

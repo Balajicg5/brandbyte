@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { campaignService, brandService, Campaign, Brand } from "@/lib/appwrite";
 import { togetherAI, GeneratePromptRequest } from "@/lib/together-ai";
 import { adCreativeService, AdCreative } from "@/lib/appwrite";
+import { useRouter } from "next/navigation";
 import { 
     Loader2, 
     X, 
@@ -21,7 +22,9 @@ import {
     ArrowRight,
     Images,
     Calendar,
-    Tag
+    Tag,
+    Type,
+    Edit3
 } from "lucide-react";
 import Image from "next/image";
 import "@/components/landing-page/styles.css";
@@ -35,6 +38,7 @@ interface CampaignFormProps {
 
 export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, onCancel }: CampaignFormProps) {
     const { user } = useAuth();
+    const router = useRouter();
     const [brands, setBrands] = useState<Brand[]>([]);
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +47,7 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
     const [success, setSuccess] = useState("");
     const [generatedPrompt, setGeneratedPrompt] = useState("");
     const [generatedImage, setGeneratedImage] = useState("");
+    const [storedImageUrl, setStoredImageUrl] = useState("");
     const [savedCampaign, setSavedCampaign] = useState<Campaign | null>(null);
     const [showGallery, setShowGallery] = useState(false);
     const [adCreatives, setAdCreatives] = useState<AdCreative[]>([]);
@@ -273,10 +278,33 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
 
             const result = await togetherAI.generateAdCreative(request);
             
-            setGenerationStep("Saving to storage...");
-            setGenerationProgress(80);
+            setGenerationStep("Storing image...");
+            setGenerationProgress(70);
 
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Store the image using proxy API to avoid CORS issues
+            try {
+                const proxyResponse = await fetch('/api/proxy-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ imageUrl: result.imageUrl })
+                });
+
+                if (proxyResponse.ok) {
+                    const { storedUrl } = await proxyResponse.json();
+                    setStoredImageUrl(storedUrl);
+                } else {
+                    console.warn('Failed to store image via proxy, using original URL');
+                    setStoredImageUrl(result.imageUrl);
+                }
+            } catch (storageError) {
+                console.error('Failed to store image, using original URL:', storageError);
+                setStoredImageUrl(result.imageUrl);
+            }
+
+            setGenerationStep("Saving to campaign...");
+            setGenerationProgress(90);
 
             setGeneratedPrompt(result.prompt);
             setGeneratedImage(result.imageUrl);
@@ -284,7 +312,7 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
             // Update the saved campaign with generated content
             const updatedCampaignData = {
                 generatedPrompt: result.prompt,
-                generatedImageUrl: result.imageUrl,
+                generatedImageUrl: storedImageUrl || result.imageUrl,
             };
             
             const updatedCampaign = await campaignService.updateCampaign(savedCampaign.$id!, updatedCampaignData);
@@ -292,7 +320,7 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
 
             setGenerationStep("Complete!");
             setGenerationProgress(100);
-            setSuccess("Ad creative generated successfully!");
+            setSuccess("Background image generated successfully! Click 'Open Editor' to add text and finalize your poster.");
 
             setTimeout(() => {
                 setGenerationStep("");
@@ -306,6 +334,13 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const openPosterEditor = () => {
+        if (!savedCampaign || !generatedImage) return;
+        
+        const imageUrl = storedImageUrl || generatedImage;
+        router.push(`/dashboard/editor?campaign=${savedCampaign.$id}&image=${encodeURIComponent(imageUrl)}`);
     };
 
     const downloadImage = async (imageUrl: string, filename: string = 'ad-creative') => {
@@ -431,10 +466,7 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
     };
 
     const handleBackToCampaigns = () => {
-        setShowGallery(false);
-        if (savedCampaign) {
-            onSuccess(savedCampaign);
-        }
+        onCancel();
     };
 
     // Gallery View
@@ -1022,6 +1054,33 @@ export default function CampaignForm({ campaign, preselectedBrandId, onSuccess, 
                                                         )}
                                                     </div>
                                                 )}
+                                            </div>
+
+                                            {/* Open Editor Section */}
+                                            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Edit3 className="w-5 h-5 text-[#7A7FEE]" />
+                                                        <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                                                            Create Your Poster
+                                                        </h4>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={openPosterEditor}
+                                                        className="btn-primary flex items-center"
+                                                    >
+                                                        <Edit3 className="w-4 h-4 mr-2" />
+                                                        Open Editor
+                                                    </button>
+                                                </div>
+
+                                                <div className="text-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                                                    <Edit3 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                                        Your background image is ready! Open the poster editor to add headlines, descriptions, and call-to-action text with professional design tools.
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
