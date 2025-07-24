@@ -182,6 +182,25 @@ IMPORTANT: Generate absolutely NO TEXT, NO WORDS, NO LETTERS in the image - only
             throw error;
         }
     }
+    private visualStyles: Record<string, string> = {
+  'cosmetics': 'glamorous studio lighting, soft focus, elegant textures, pastel tones, luxurious feel',
+  'tech': 'clean minimal background, sharp lighting, modern product staging, high contrast, metallic finish',
+  'fashion': 'editorial magazine style, dramatic lighting, model in dynamic pose, aesthetic shadows',
+  'food': 'moody lighting, rustic wooden table, shallow depth of field, overhead and side angles, steam/smoke effects',
+  'fitness': 'high contrast lighting, dynamic composition, toned bodies in motion, gritty gym environment',
+  'jewelry': 'macro shots, elegant lighting, velvet or black backgrounds, soft focus on gems, luxury vibe',
+  'furniture': 'natural daylight, cozy room setup, scandinavian decor, wide-angle view, realistic shadows',
+  'books': 'warm ambient lighting, cozy reading nook, wooden table, open pages, artistic composition',
+  'toys': 'bright playful colors, high-key lighting, vibrant background, fun and cheerful vibe',
+  'home decor': 'sunlit interiors, neutral palette, elegant staging, soft textures, stylish props',
+  'automobile': 'glossy lighting, action shots, reflective surfaces, dramatic background, high-end detailing',
+  'travel': 'natural scenic background, immersive landscapes, dynamic angles, culturally rich visuals',
+  'gaming': 'dark neon-lit background, RGB glow effects, futuristic setup, high energy feel',
+  'healthcare': 'clean sterile white background, soft lighting, medical props, trustworthy tone',
+  'education': 'bright well-lit desk setup, stationary, books, laptop, clean academic setting'
+};
+
+
 
     private enhancePromptForAdCreativeLayout(basePrompt: string, request: GenerateAdRequest): string {
         // Get simple color descriptors
@@ -201,7 +220,9 @@ IMPORTANT: Generate absolutely NO TEXT, NO WORDS, NO LETTERS in the image - only
             "no text or typography in image",
             "clean overlay-friendly design"
         ];
-
+        
+      const categorystyle = this.visualStyles[request.productCategory.toLowerCase()] || 'clean white background, product centered, soft shadows, minimalistic layout';
+  
         // Platform-specific enhancements
         const platformEnhancements = this.getPlatformSpecificEnhancements(request.targetPlatforms);
 
@@ -219,7 +240,7 @@ IMPORTANT: Generate absolutely NO TEXT, NO WORDS, NO LETTERS in the image - only
         cleanedPrompt = cleanedPrompt.replace(/\b(text|words|letters|typography|font|headline|title|writing|script|caption|label|sign|banner|message|slogan|tagline)\b/gi, 'visual element');
 
         // Create final comprehensive ad creative prompt
-        const finalPrompt = `${cleanedPrompt}, ${adCreativeEnhancements.join(', ')}, ${platformEnhancements.join(', ')}, high quality, 4k, professional advertising photography, absolutely no text or words in image, text-free design, clean visual layout`;
+        const finalPrompt = `${cleanedPrompt},${categorystyle}, ${adCreativeEnhancements.join(', ')}, ${platformEnhancements.join(', ')}, high quality, 4k, professional advertising photography, absolutely no text or words in image, text-free design, clean visual layout`;
         
         return finalPrompt;
     }
