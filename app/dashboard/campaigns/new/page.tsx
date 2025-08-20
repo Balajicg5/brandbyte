@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import ProtectedRoute from "@/components/auth/protected-route";
 import DashboardLayout from "@/components/dashboard/layout";
-import CampaignForm from "@/components/dashboard/campaign-form";
+import CampaignBuilder from "@/components/dashboard/campaign-builder";
 import { Campaign } from "@/lib/appwrite";
 
 export default function NewCampaignPage() {
@@ -21,13 +21,11 @@ export default function NewCampaignPage() {
 
     return (
         <ProtectedRoute>
-            <DashboardLayout>
-                <CampaignForm
-                    preselectedBrandId={preselectedBrandId || undefined}
-                    onSuccess={handleSuccess}
-                    onCancel={handleCancel}
-                />
-            </DashboardLayout>
+            <CampaignBuilder
+                preselectedBrandId={preselectedBrandId || undefined}
+                onSuccess={handleSuccess}
+                onCancel={handleCancel}
+            />
         </ProtectedRoute>
     );
 } 

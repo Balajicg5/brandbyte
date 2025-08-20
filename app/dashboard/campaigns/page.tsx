@@ -5,7 +5,8 @@ import { useAuth } from "@/lib/auth-context";
 import { campaignService, brandService, Campaign, Brand } from "@/lib/appwrite";
 import ProtectedRoute from "@/components/auth/protected-route";
 import DashboardLayout from "@/components/dashboard/layout";
-import CampaignForm from "@/components/dashboard/campaign-form";
+import CampaignBuilder from "@/components/dashboard/campaign-builder";
+import CampaignStatus from "@/components/dashboard/campaign-status";
 import { 
     Plus, 
     Edit, 
@@ -16,13 +17,16 @@ import {
     Eye,
     Download,
     Play,
-    Pause,
+    Square as Pause,
     Square,
     Wand2,
     ChevronRight,
     Target,
     Palette,
-    Images
+    Images,
+    Clock,
+    Users as UsersIcon,
+    Send
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -148,12 +152,10 @@ export default function CampaignsPage() {
     if (showCreateForm) {
         return (
             <ProtectedRoute>
-                <DashboardLayout>
-                    <CampaignForm
-                        onSuccess={handleCreateSuccess}
-                        onCancel={() => setShowCreateForm(false)}
-                    />
-                </DashboardLayout>
+                <CampaignBuilder
+                    onSuccess={handleCreateSuccess}
+                    onCancel={() => setShowCreateForm(false)}
+                />
             </ProtectedRoute>
         );
     }
@@ -161,13 +163,11 @@ export default function CampaignsPage() {
     if (editingCampaign) {
         return (
             <ProtectedRoute>
-                <DashboardLayout>
-                    <CampaignForm
-                        campaign={editingCampaign}
-                        onSuccess={handleEditSuccess}
-                        onCancel={() => setEditingCampaign(null)}
-                    />
-                </DashboardLayout>
+                <CampaignBuilder
+                    campaign={editingCampaign}
+                    onSuccess={handleEditSuccess}
+                    onCancel={() => setEditingCampaign(null)}
+                />
             </ProtectedRoute>
         );
     }
@@ -359,148 +359,167 @@ export default function CampaignsPage() {
                             </p>
                         </div>
                     ) : campaigns.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="grid gap-6">
                             {filteredCampaigns.map((campaign) => (
                                 <div
                                     key={campaign.$id}
-                                    className="bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
+                                    className="bg-white dark:bg-[#272829] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-200"
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center space-x-3 mb-2">
-                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                    {campaign.name}
-                                                </h3>
-                                                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(campaign.status)}`}>
-                                                    {campaign.status}
-                                                </span>
-                                            </div>
-                                            
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                {campaign.description}
-                                            </p>
-                                            
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                                <div>
-                                                    <span className="text-gray-500 dark:text-gray-400">Brand:</span>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        {getBrandName(campaign.brandId)}
-                                                    </p>
+                                    {/* Campaign Header */}
+                                    <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-3 mb-2">
+                                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                                        {campaign.name}
+                                                    </h3>
+                                                    <CampaignStatus
+                                                        campaign={campaign}
+                                                        onStatusChange={handleStatusChange}
+                                                        onEdit={setEditingCampaign}
+                                                        onDelete={handleDelete}
+                                                    />
                                                 </div>
-                                                <div>
-                                                    <span className="text-gray-500 dark:text-gray-400">Product:</span>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        {campaign.productName}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-500 dark:text-gray-400">Category:</span>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        {campaign.productCategory}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-500 dark:text-gray-400">Platforms:</span>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        {campaign.targetPlatforms.slice(0, 2).join(", ")}
-                                                        {campaign.targetPlatforms.length > 2 && ` +${campaign.targetPlatforms.length - 2}`}
-                                                    </p>
+                                                
+                                                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                                    {campaign.description}
+                                                </p>
+
+                                                {/* Campaign Metrics */}
+                                                <div className="flex items-center space-x-6 text-sm">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Target className="w-4 h-4 text-[#7A7FEE]" />
+                                                        <span className="text-gray-600 dark:text-gray-400">Goal:</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">
+                                                            {campaign.campaignGoals?.[0] || 'Not specified'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <UsersIcon className="w-4 h-4 text-[#7A7FEE]" />
+                                                        <span className="text-gray-600 dark:text-gray-400">Audience:</span>
+                                                        <span className="font-medium text-gray-900 dark:text-white">
+                                                            {campaign.targetAudience ? 
+                                                                campaign.targetAudience.substring(0, 30) + (campaign.targetAudience.length > 30 ? '...' : '') 
+                                                                : 'Not specified'
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Send className="w-4 h-4 text-[#7A7FEE]" />
+                                                        <span className="text-gray-600 dark:text-gray-400">Channels:</span>
+                                                        <div className="flex space-x-1">
+                                                            {campaign.targetPlatforms.slice(0, 3).map((platform, index) => (
+                                                                <span
+                                                                    key={index}
+                                                                    className="px-2 py-1 bg-[#7A7FEE]/10 text-[#7A7FEE] rounded text-xs"
+                                                                >
+                                                                    {platform}
+                                                                </span>
+                                                            ))}
+                                                            {campaign.targetPlatforms.length > 3 && (
+                                                                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs">
+                                                                    +{campaign.targetPlatforms.length - 3}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
+                                            {/* Campaign Visual Preview */}
                                             {campaign.generatedImageUrl && (
-                                                <div className="mt-4 flex items-center space-x-2">
-                                                    <div className="w-16 h-16 relative">
+                                                <div className="ml-6">
+                                                    <div className="w-20 h-20 relative">
                                                         <Image
                                                             src={campaign.generatedImageUrl}
-                                                            alt="Generated ad creative"
-                                                            width={64}
-                                                            height={64}
-                                                            className="w-full h-full object-cover rounded border border-gray-200 dark:border-gray-700"
+                                                            alt="Campaign creative"
+                                                            width={80}
+                                                            height={80}
+                                                            className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                                                         />
-                                                    </div>
-                                                    <div className="flex space-x-2">
                                                         <button
                                                             onClick={() => setViewingImage(campaign.generatedImageUrl!)}
-                                                            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                                            title="View image"
+                                                            className="absolute inset-0 bg-black/0 hover:bg-black/20 rounded-lg transition-colors flex items-center justify-center"
                                                         >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => downloadImage(campaign.generatedImageUrl!, campaign.name)}
-                                                            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                                            title="Download image"
-                                                        >
-                                                            <Download className="w-4 h-4" />
+                                                            <Eye className="w-5 h-5 text-white opacity-0 hover:opacity-100 transition-opacity" />
                                                         </button>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
 
-                                        {/* Actions */}
-                                        <div className="flex items-center space-x-2">
-                                            {/* Status Controls */}
-                                            {campaign.status === 'draft' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(campaign.$id!, 'active')}
-                                                    className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md"
-                                                    title="Activate campaign"
-                                                >
-                                                    <Play className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            
-                                            {campaign.status === 'active' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(campaign.$id!, 'paused')}
-                                                    className="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-md"
-                                                    title="Pause campaign"
-                                                >
-                                                    <Pause className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            
-                                            {campaign.status === 'paused' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleStatusChange(campaign.$id!, 'active')}
-                                                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md"
-                                                        title="Resume campaign"
-                                                    >
-                                                        <Play className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleStatusChange(campaign.$id!, 'completed')}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
-                                                        title="Complete campaign"
-                                                    >
-                                                        <Square className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
+                                    {/* Campaign Details */}
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {/* Product Info */}
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Product Details</h4>
+                                                <div className="space-y-1 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">Name:</span>
+                                                        <span className="ml-2 text-gray-900 dark:text-white">{campaign.productName}</span>
+                                                    </div>
+                                                    {campaign.productCategory && (
+                                                        <div>
+                                                            <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                                                            <span className="ml-2 text-gray-900 dark:text-white">{campaign.productCategory}</span>
+                                                        </div>
+                                                    )}
+                                                    {campaign.productPrice && (
+                                                        <div>
+                                                            <span className="text-gray-500 dark:text-gray-400">Price:</span>
+                                                            <span className="ml-2 text-gray-900 dark:text-white">{campaign.productPrice}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
 
-                                            {/* Menu */}
-                                            <div className="relative group">
-                                                <button className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                    <MoreVertical className="w-4 h-4 text-gray-400" />
-                                                </button>
-                                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                                    <button
-                                                        onClick={() => setEditingCampaign(campaign)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                    >
-                                                        <Edit className="w-4 h-4 mr-2" />
-                                                        Edit Campaign
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDeleteConfirm(campaign.$id!)}
-                                                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                    >
-                                                        <Trash2 className="w-4 h-4 mr-2" />
-                                                        Delete Campaign
-                                                    </button>
+                                            {/* Brand Info */}
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Brand & Timing</h4>
+                                                <div className="space-y-1 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">Brand:</span>
+                                                        <span className="ml-2 text-gray-900 dark:text-white">{getBrandName(campaign.brandId)}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">Created:</span>
+                                                        <span className="ml-2 text-gray-900 dark:text-white">
+                                                            {campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : 'Unknown'}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">Updated:</span>
+                                                        <span className="ml-2 text-gray-900 dark:text-white">
+                                                            {campaign.updatedAt ? new Date(campaign.updatedAt).toLocaleDateString() : 'Unknown'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Performance Preview */}
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Performance</h4>
+                                                <div className="space-y-1 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">Status:</span>
+                                                        <span className={`ml-2 px-2 py-0.5 rounded text-xs ${getStatusColor(campaign.status)}`}>
+                                                            {campaign.status}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500 dark:text-gray-400">CTA:</span>
+                                                        <span className="ml-2 text-gray-900 dark:text-white">
+                                                            {campaign.callToAction || 'Not specified'}
+                                                        </span>
+                                                    </div>
+                                                    {campaign.status === 'active' && (
+                                                        <div className="flex items-center space-x-1">
+                                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                            <span className="text-green-600 dark:text-green-400 text-xs">Live Campaign</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
