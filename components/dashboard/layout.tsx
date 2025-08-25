@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -14,7 +14,8 @@ import {
     LogOut,
     User,
     Images,
-    Edit3
+    Edit3,
+    ChevronDown
 } from "lucide-react";
 import { brandColors } from "@/components/landing-page/color-utils";
 
@@ -32,145 +33,194 @@ const navigation = [
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userDropdownOpen, setUserDropdownOpen] = useState(false);
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setUserDropdownOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#111111]">
-            {/* Mobile sidebar */}
-            {sidebarOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-                    <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#272829] shadow-xl">
-                        <div className="flex h-full flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {/* Top Navigation Bar */}
+            <nav className="bg-white dark:bg-[#272829] border-b border-gray-200 dark:border-gray-700">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex h-16 justify-between">
+                        {/* Left side - Logo and Navigation */}
+                        <div className="flex">
+                            {/* Logo */}
+                            <div className="flex flex-shrink-0 items-center">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                     BrandByte
                                 </h2>
-                                <button
-                                    onClick={() => setSidebarOpen(false)}
-                                    className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
                             </div>
-                            <nav className="flex-1 p-4 space-y-2">
+                            
+                            {/* Desktop Navigation */}
+                            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                                 {navigation.map((item) => {
                                     const isActive = pathname === item.href;
                                     return (
                                         <Link
                                             key={item.name}
                                             href={item.href}
-                                            onClick={() => setSidebarOpen(false)}
-                                            className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                            className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors ${
                                                 isActive
-                                                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                    ? "border-[#7A7FEE] text-[#7A7FEE]"
+                                                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
                                             }`}
                                         >
-                                            <item.icon className="w-5 h-5 mr-3" />
+                                            <item.icon className="w-4 h-4 mr-2" />
                                             {item.name}
                                         </Link>
                                     );
                                 })}
-                            </nav>
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center mb-3">
-                                    <User className="w-8 h-8 p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mr-3" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {user?.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {user?.email}
-                                        </p>
+                            </div>
+                        </div>
+
+                        {/* Right side - User menu */}
+                        <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                            <div className="relative ml-3" ref={dropdownRef}>
+                                <div>
+                                    <button
+                                        type="button"
+                                        className="flex rounded-full bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#7A7FEE] focus:ring-offset-2"
+                                        onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                                    >
+                                        <span className="sr-only">Open user menu</span>
+                                        <div className="flex items-center space-x-3 px-3 py-2">
+                                            <User className="w-6 h-6 p-1 bg-gray-100 dark:bg-gray-700 rounded-full" />
+                                            <div className="hidden md:block text-left">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {user?.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {user?.email}
+                                                </p>
+                                            </div>
+                                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                    </button>
+                                </div>
+                                
+                                {/* User dropdown menu */}
+                                {userDropdownOpen && (
+                                    <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-[#272829] py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                {user?.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {user?.email}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setUserDropdownOpen(false);
+                                            }}
+                                            className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        >
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Mobile menu button */}
+                        <div className="-mr-2 flex items-center sm:hidden">
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center rounded-md bg-white dark:bg-[#272829] p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7A7FEE] focus:ring-offset-2"
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            >
+                                <span className="sr-only">Open main menu</span>
+                                {mobileMenuOpen ? (
+                                    <X className="block h-6 w-6" />
+                                ) : (
+                                    <Menu className="block h-6 w-6" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile menu */}
+                {mobileMenuOpen && (
+                    <div className="sm:hidden">
+                        <div className="space-y-1 pb-3 pt-2">
+                            {navigation.map((item) => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium transition-colors ${
+                                            isActive
+                                                ? "border-[#7A7FEE] bg-[#7A7FEE]/10 text-[#7A7FEE]"
+                                                : "border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                                        }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <item.icon className="w-5 h-5 mr-3" />
+                                            {item.name}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                        <div className="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
+                            <div className="flex items-center px-4">
+                                <div className="flex-shrink-0">
+                                    <User className="w-8 h-8 p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full" />
+                                </div>
+                                <div className="ml-3">
+                                    <div className="text-base font-medium text-gray-800 dark:text-white">
+                                        {user?.name}
+                                    </div>
+                                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {user?.email}
                                     </div>
                                 </div>
+                            </div>
+                            <div className="mt-3 space-y-1">
                                 <button
-                                    onClick={logout}
-                                    className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
+                                    onClick={() => {
+                                        logout();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center px-4 py-2 text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                                 >
-                                    <LogOut className="w-4 h-4 mr-2" />
+                                    <LogOut className="w-5 h-5 mr-3" />
                                     Sign out
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Desktop sidebar */}
-            <div className="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col">
-                <div className="flex flex-col flex-grow bg-white dark:bg-[#272829] border-r border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            BrandByte
-                        </h2>
-                    </div>
-                    <nav className="flex-1 px-4 py-6 space-y-2">
-                        {navigation.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                        isActive
-                                            ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    }`}
-                                >
-                                    <item.icon className="w-5 h-5 mr-3" />
-                                    {item.name}
-                                </Link>
-                            );
-                        })}
-                    </nav>
-                    <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center mb-3">
-                            <User className="w-8 h-8 p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mr-3" />
-                            <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {user?.name}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {user?.email}
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={logout}
-                            className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
-                        >
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Sign out
-                        </button>
-                    </div>
-                </div>
-            </div>
+                )}
+            </nav>
 
             {/* Main content */}
-            <div className="lg:pl-64">
-                {/* Top bar for mobile */}
-                <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-[#272829] border-b border-gray-200 dark:border-gray-700">
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                        <Menu className="w-6 h-6" />
-                    </button>
-                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        BrandByte
-                    </h1>
-                    <div className="w-10" /> {/* Spacer for centering */}
-                </div>
-
-                {/* Page content */}
-                <main className="flex-1">
+            <main className="flex-1">
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     {children}
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 } 
